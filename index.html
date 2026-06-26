@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iVoc · Ripasso per la difesa</title>
+<meta name="description" content="Quiz e materiali per la difesa del dottorato: poesia italiana 1960-65 e la concordanza iVoc.">
+<link rel="stylesheet" href="style.css?v=3">
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <img src="ivoc_logo.png" alt="iVoc logo" class="brand-logo">
+      <span><span class="i">i</span>Voc · Ripasso&nbsp;<small>difesa dottorato — poesia 1960-65</small></span>
+    </div>
+    <nav class="tabs" id="tabs">
+      <button data-view="studio" class="active">Studio</button>
+      <button data-view="ripasso">Ripasso</button>
+      <button data-view="materiali">Materiali</button>
+      <button data-view="dashboard">Dashboard</button>
+      <button data-view="impostazioni">Impostazioni</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- ============ STUDIO ============ -->
+  <section id="view-studio" class="view">
+    <!-- setup / filtri -->
+    <div id="studio-setup">
+      <div class="panel">
+        <h2 class="sec">Imposta la sessione</h2>
+        <p class="lead">Filtra per argomento e tipo, poi avvia. La difesa testa la <em>giustificazione</em>: non solo cosa, ma perché.</p>
+        <div class="fgroup">
+          <label>Argomento (topic)</label>
+          <div class="chips" id="f-topic"></div>
+        </div>
+        <div class="fgroup">
+          <label>Tipo di domanda</label>
+          <div class="chips" id="f-type"></div>
+        </div>
+        <div class="fgroup">
+          <label>Angolo di difesa</label>
+          <div class="chips" id="f-angle"></div>
+        </div>
+        <div class="fgroup">
+          <label>Modalità</label>
+          <div class="toggles">
+            <label class="toggle"><input type="checkbox" id="t-review"> Solo «da ripassare»</label>
+            <label class="toggle"><input type="checkbox" id="t-unseen"> Solo non ancora viste</label>
+            <label class="toggle"><input type="checkbox" id="t-random"> Ordine casuale</label>
+            <label class="toggle"><input type="checkbox" id="t-leitner" checked> Ripetizione spaziata (Leitner)</label>
+            <label class="toggle"><input type="checkbox" id="t-oral"> Modalità orale (voce)</label>
+          </div>
+        </div>
+        <div class="fgroup">
+          <label>Ricerca testuale</label>
+          <div class="searchbar"><input id="f-search" type="search" placeholder="cerca tra le domande, es. «hapax», «Montale», «indice di ripetizione»…"></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn primary" id="btn-start">▶ Avvia sessione</button>
+          <button class="btn ghost" id="btn-sim">⚔ Simulazione difesa</button>
+          <span class="count-pill" id="match-count">— domande</span>
+        </div>
+        <p class="lead" style="margin-top:12px;font-size:.82rem">La «simulazione difesa» estrae un mix casuale di domande avanzate, obiezioni e collegamenti-dati, a tempo.</p>
+      </div>
+    </div>
+
+    <!-- runner -->
+    <div id="studio-run" class="hidden">
+      <div class="btn-row no-print" style="margin-bottom:12px">
+        <button class="btn ghost sm" id="btn-back">‹ Esci</button>
+        <span id="run-mode" class="tag topic"></span>
+        <span id="sim-timer" class="count-pill hidden">⏱ —</span>
+        <span class="count-pill" id="run-progress">0 / 0</span>
+      </div>
+      <div class="panel" id="qcard"></div>
+    </div>
+  </section>
+
+  <!-- ============ RIPASSO COMPLETO ============ -->
+  <section id="view-ripasso" class="view hidden">
+    <div class="panel no-print">
+      <h2 class="sec">Ripasso completo — «da ripassare»</h2>
+      <p class="lead">Tutte le domande marcate da ripassare, con risposta e fonte. Stampabile / esportabile.</p>
+      <div class="btn-row">
+        <button class="btn ghost sm" id="btn-print">🖨 Stampa / PDF</button>
+        <button class="btn ghost sm" id="btn-export-review">⬇ Esporta (.md)</button>
+        <span class="count-pill" id="review-count">—</span>
+      </div>
+    </div>
+    <div id="review-list" style="margin-top:14px"></div>
+  </section>
+
+  <!-- ============ MATERIALI (Dossier di difesa) ============ -->
+  <section id="view-materiali" class="view hidden">
+    <!-- index landing -->
+    <div id="mat-index">
+      <h2 class="sec">Dossier di difesa</h2>
+      <p class="lead">Tutto il materiale di studio in un posto solo: la spina dorsale, le domande della giuria, le contromosse e i numeri da sapere a memoria.</p>
+      <div class="mat-cards" id="mat-cards"></div>
+    </div>
+    <!-- reader -->
+    <div id="mat-reader" class="hidden">
+      <div class="btn-row no-print" style="margin-bottom:12px">
+        <button class="btn ghost sm" id="mat-back">‹ Dossier</button>
+        <div class="mat-nav" id="mat-nav"></div>
+        <button class="btn ghost sm" id="mat-print" style="margin-left:auto">🖨 Stampa</button>
+      </div>
+      <div class="panel"><div class="md" id="mat-body"></div></div>
+    </div>
+  </section>
+
+  <!-- ============ DASHBOARD ============ -->
+  <section id="view-dashboard" class="view hidden">
+    <h2 class="sec">Padronanza</h2>
+    <div class="kpis" id="kpis"></div>
+    <div class="panel" style="margin-top:16px">
+      <h3 style="margin-top:0">Per argomento</h3>
+      <table class="tbl" id="topic-table"></table>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <h3 style="margin-top:0">Per angolo di difesa</h3>
+      <table class="tbl" id="angle-table"></table>
+    </div>
+  </section>
+
+  <!-- ============ IMPOSTAZIONI ============ -->
+  <section id="view-impostazioni" class="view hidden">
+    <div class="panel">
+      <h2 class="sec">Progresso & dati</h2>
+      <p class="lead">Il progresso (viste, «da ripassare / la so», box Leitner) è salvato nel browser (localStorage).</p>
+      <div class="btn-row">
+        <button class="btn ghost" id="btn-export">⬇ Esporta progresso (.json)</button>
+        <label class="btn ghost" for="imp-file">⬆ Importa progresso</label>
+        <input id="imp-file" type="file" accept="application/json" class="hidden">
+        <button class="btn ghost" id="btn-reset">🗑 Azzera progresso</button>
+      </div>
+      <p class="lead" id="dataset-info" style="margin-top:14px"></p>
+    </div>
+    <div class="panel">
+      <h3 style="margin-top:0">Voce (modalità orale)</h3>
+      <div class="fgroup">
+        <label>Voce TTS</label>
+        <select id="tts-voice" class="free-input" style="min-height:auto"></select>
+      </div>
+      <div class="btn-row"><button class="btn ghost sm" id="tts-test">🔊 Prova voce</button></div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  Costruito per la difesa · dati ancorati a tesi, statistiche e concordanza iVoc · tutto offline.
+</footer>
+
+<script src="data.js?v=3"></script>
+<script src="app.js?v=3"></script>
+</body>
+</html>
