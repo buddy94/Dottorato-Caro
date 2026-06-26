@@ -42,13 +42,20 @@
   // ---------- filter state ----------
   const F = { topic: new Set(), type: new Set(), angle: new Set(), review: false, unseen: false, random: false, leitner: true, oral: false, search: '' };
 
+  const TIP = {
+    topic: { tesi: 'Domande sul contenuto della tesi, capitolo per capitolo.', metodologia: 'Il perché delle scelte: corpus, periodo, digitalizzazione, tagging.', statistiche: 'Lettura corretta dei numeri di iVoc e loro legame con la tesi.', concordanze: 'Dati della concordanza (occorrenze, lemmi) e cosa sostengono.', testi: 'Le 56 raccolte del corpus: tema, stile, struttura.', autori: 'I 41 poeti del corpus: biografia e collocazione critica.', contesto: 'Il 1960-65: movimenti, eventi, clima culturale.' },
+    type: { aperta: 'Rispondi a voce o a mente, poi rivela e auto-valutati.', vero_falso: 'Scegli Vero o Falso; la correzione è automatica.', multipla: 'Scegli l’opzione (o le opzioni) corretta.', riordino: 'Metti gli elementi nell’ordine giusto.', abbinamento: 'Associa ogni voce al suo corrispondente.', flashcard: 'Carta da memoria: pensa la risposta, poi rivela.', cloze: 'Completa lo spazio vuoto nella frase.' },
+    angle: { ricordo: 'Contenuto di base: cosa dice o cosa contiene.', metodologia: 'Perché questa scelta di metodo.', limiti: 'I punti deboli del metodo.', obiezione: 'Avvocato del diavolo: rispondi a una critica.', collegamento_dati: 'Collega un dato alla tesi che sostiene (e viceversa).', definizione: 'Definisci un termine tecnico in una frase.', contributo: 'Cosa c’è di nuovo e originale.', contesto: 'Il legame col periodo 1960-65.' }
+  };
   function buildChips(containerId, dim, labelMap) {
     const counts = {};
     DATA.forEach(q => { const k = (dim === 'angle' ? q.defenseAngle : q[dim]) || (dim === 'angle' ? 'null' : null); if (k) counts[k] = (counts[k] || 0) + 1; });
     const cont = $('#' + containerId); cont.innerHTML = '';
+    const tips = TIP[dim] || {};
     Object.keys(labelMap).filter(k => counts[k]).sort((a, b) => counts[b] - counts[a]).forEach(k => {
       const b = document.createElement('button');
-      b.className = 'chip'; b.dataset.k = k;
+      b.className = 'chip' + (tips[k] ? ' tip' : ''); b.dataset.k = k;
+      if (tips[k]) { b.setAttribute('data-tip', tips[k]); b.setAttribute('aria-label', labelMap[k] + ': ' + tips[k]); }
       b.innerHTML = esc(labelMap[k]) + ' <span class="n">' + counts[k] + '</span>';
       b.onclick = () => { b.classList.toggle('on'); const s = F[dim]; b.classList.contains('on') ? s.add(k) : s.delete(k); updateCount(); };
       cont.appendChild(b);
@@ -264,9 +271,9 @@
   function renderFoot(q) {
     const foot = $('#q-foot'); const auto = ['vero_falso', 'multipla', 'riordino', 'abbinamento', 'cloze'].includes(q.type);
     foot.innerHTML =
-      '<button class="btn ghost sm" id="btn-sol">💡 Mostra soluzione</button>' +
-      '<div class="seg" id="seg-status"><button class="review" data-s="review">Da ripassare</button><button class="know" data-s="know">La so</button></div>' +
-      '<button class="btn primary sm" id="btn-next" style="margin-left:auto">Prossima ›</button>';
+      '<button class="btn ghost sm tip" data-tip="Rivela la risposta, la spiegazione (il «perché») e la fonte." id="btn-sol">💡 Mostra soluzione</button>' +
+      '<div class="seg" id="seg-status"><button class="review tip" data-tip="Marca «da ripassare»: tornerà più spesso e finirà nel Ripasso." data-s="review">Da ripassare</button><button class="know tip" data-tip="«La so»: la rivedrai meno spesso (sale di scatola Leitner)." data-s="know">La so</button></div>' +
+      '<button class="btn primary sm tip" data-tip="Vai alla prossima domanda (rivela la soluzione se non l’hai già vista)." id="btn-next" style="margin-left:auto">Prossima ›</button>';
     let revealed = false;
     const reveal = () => {
       if (revealed) return; revealed = true;

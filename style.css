@@ -17,6 +17,22 @@ a{color:var(--petrol-l)}
 button{font-family:inherit;cursor:pointer}
 .hidden{display:none !important}
 
+/* ---------- Tooltips (hover) ---------- */
+.tip{position:relative}
+.tip::after,.tip::before{opacity:0;pointer-events:none;transition:opacity .13s ease;z-index:60}
+.tip::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 9px);transform:translateX(-50%);
+  background:#0a3e49;color:#fff;padding:8px 11px;border-radius:9px;font-size:.77rem;font-weight:500;line-height:1.4;
+  letter-spacing:0;text-transform:none;white-space:normal;width:max-content;max-width:240px;text-align:left;
+  box-shadow:0 6px 20px rgba(10,40,49,.24)}
+.tip::before{content:'';position:absolute;left:50%;bottom:calc(100% + 3px);transform:translateX(-50%);
+  border:6px solid transparent;border-top-color:#0a3e49}
+.tip:hover::after,.tip:hover::before,.tip:focus-visible::after,.tip:focus-visible::before{opacity:1}
+/* variant: tooltip below (for elements near the top, e.g. tabs) */
+.tip-b::after{bottom:auto;top:calc(100% + 9px)}
+.tip-b::before{bottom:auto;top:calc(100% + 3px);border-top-color:transparent;border-bottom-color:#0a3e49}
+@media(max-width:520px){.tip::after{max-width:200px;font-size:.72rem}}
+@media print{.tip::after,.tip::before{display:none}}
+
 /* ---------- Header ---------- */
 header.top{position:sticky;top:0;z-index:30;background:var(--petrol);color:#fff;box-shadow:var(--shadow)}
 .top-in{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:14px;padding:10px 16px}
@@ -46,6 +62,7 @@ h2.sec{font-size:1.15rem;margin:6px 0 14px;color:var(--petrol-d)}
 /* ---------- Filters ---------- */
 .fgroup{margin-bottom:14px}
 .fgroup>label{display:block;font-weight:700;font-size:.82rem;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);margin-bottom:7px}
+.fgroup>label .hint{font-weight:500;text-transform:none;letter-spacing:0;color:var(--muted);opacity:.85;font-size:.92em}
 .chips{display:flex;flex-wrap:wrap;gap:7px}
 .chip{border:1px solid var(--line);background:var(--soft);color:var(--ink);padding:6px 11px;border-radius:999px;font-size:.85rem;font-weight:600;display:inline-flex;align-items:center;gap:6px}
 .chip:hover{border-color:var(--petrol-l)}
@@ -114,8 +131,10 @@ h2.sec{font-size:1.15rem;margin:6px 0 14px;color:var(--petrol-d)}
 
 /* footer actions of question */
 .qfoot{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
-.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px}
 .seg button{border:0;background:#fff;padding:9px 13px;font-weight:700;font-size:.86rem;color:var(--muted)}
+.seg button:first-child{border-radius:10px 0 0 10px}
+.seg button:last-child{border-radius:0 10px 10px 0}
 .seg button.know.on{background:var(--ok);color:#fff}
 .seg button.review.on{background:var(--orange);color:#fff}
 

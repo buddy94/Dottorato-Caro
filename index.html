@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>iVoc · Ripasso per la difesa</title>
 <meta name="description" content="Quiz e materiali per la difesa del dottorato: poesia italiana 1960-65 e la concordanza iVoc.">
-<link rel="stylesheet" href="style.css?v=3">
+<link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
 <header class="top">
@@ -15,11 +15,11 @@
       <span><span class="i">i</span>Voc · Ripasso&nbsp;<small>difesa dottorato — poesia 1960-65</small></span>
     </div>
     <nav class="tabs" id="tabs">
-      <button data-view="studio" class="active">Studio</button>
-      <button data-view="ripasso">Ripasso</button>
-      <button data-view="materiali">Materiali</button>
-      <button data-view="dashboard">Dashboard</button>
-      <button data-view="impostazioni">Impostazioni</button>
+      <button data-view="studio" class="active tip tip-b" data-tip="Allenati con i quiz: scegli i filtri e avvia una sessione.">Studio</button>
+      <button data-view="ripasso" class="tip tip-b" data-tip="Tutte le domande marcate «da ripassare», in un unico documento stampabile.">Ripasso</button>
+      <button data-view="materiali" class="tip tip-b" data-tip="Il dossier di difesa: brief, domande-giuria, punti deboli, cheat-sheet, glossario, timeline e slide.">Materiali</button>
+      <button data-view="dashboard" class="tip tip-b" data-tip="La tua padronanza per argomento e per angolo di difesa.">Dashboard</button>
+      <button data-view="impostazioni" class="tip tip-b" data-tip="Salva/ripristina i progressi e imposta la voce TTS.">Impostazioni</button>
     </nav>
   </div>
 </header>
@@ -33,35 +33,35 @@
         <h2 class="sec">Imposta la sessione</h2>
         <p class="lead">Filtra per argomento e tipo, poi avvia. La difesa testa la <em>giustificazione</em>: non solo cosa, ma perché.</p>
         <div class="fgroup">
-          <label>Argomento (topic)</label>
+          <label>Argomento <span class="hint">— di cosa parla la domanda (passa il mouse su ogni voce)</span></label>
           <div class="chips" id="f-topic"></div>
         </div>
         <div class="fgroup">
-          <label>Tipo di domanda</label>
+          <label>Tipo di domanda <span class="hint">— come rispondi (aperta, scelta, riordino…)</span></label>
           <div class="chips" id="f-type"></div>
         </div>
         <div class="fgroup">
-          <label>Angolo di difesa</label>
+          <label>Angolo di difesa <span class="hint">— cosa mette alla prova (ricordo, obiezione, metodo…)</span></label>
           <div class="chips" id="f-angle"></div>
         </div>
         <div class="fgroup">
           <label>Modalità</label>
           <div class="toggles">
-            <label class="toggle"><input type="checkbox" id="t-review"> Solo «da ripassare»</label>
-            <label class="toggle"><input type="checkbox" id="t-unseen"> Solo non ancora viste</label>
-            <label class="toggle"><input type="checkbox" id="t-random"> Ordine casuale</label>
-            <label class="toggle"><input type="checkbox" id="t-leitner" checked> Ripetizione spaziata (Leitner)</label>
-            <label class="toggle"><input type="checkbox" id="t-oral"> Modalità orale (voce)</label>
+            <label class="toggle tip" data-tip="Mostra solo le domande che hai marcato «da ripassare»."><input type="checkbox" id="t-review"> Solo «da ripassare»</label>
+            <label class="toggle tip" data-tip="Mostra solo le domande mai aperte finora."><input type="checkbox" id="t-unseen"> Solo non ancora viste</label>
+            <label class="toggle tip" data-tip="Pesca le domande in ordine casuale invece dell'ordine di studio."><input type="checkbox" id="t-random"> Ordine casuale</label>
+            <label class="toggle tip" data-tip="Ripetizione spaziata (5 scatole di Leitner): ripropone prima ciò che sai meno."><input type="checkbox" id="t-leitner" checked> Ripetizione spaziata (Leitner)</label>
+            <label class="toggle tip" data-tip="La voce legge la domanda e la soluzione; tu rispondi a voce, poi riveli (Web Speech)."><input type="checkbox" id="t-oral"> Modalità orale (voce)</label>
           </div>
         </div>
         <div class="fgroup">
-          <label>Ricerca testuale</label>
+          <label>Ricerca testuale <span class="hint">— filtra per parola in domanda, risposta o spiegazione</span></label>
           <div class="searchbar"><input id="f-search" type="search" placeholder="cerca tra le domande, es. «hapax», «Montale», «indice di ripetizione»…"></div>
         </div>
         <div class="btn-row">
-          <button class="btn primary" id="btn-start">▶ Avvia sessione</button>
-          <button class="btn ghost" id="btn-sim">⚔ Simulazione difesa</button>
-          <span class="count-pill" id="match-count">— domande</span>
+          <button class="btn primary tip" data-tip="Avvia la sessione con i filtri scelti qui sopra." id="btn-start">▶ Avvia sessione</button>
+          <button class="btn ghost tip" data-tip="Mix casuale di domande avanzate e obiezioni, a tempo: come una vera difesa." id="btn-sim">⚔ Simulazione difesa</button>
+          <span class="count-pill tip" data-tip="Quante domande corrispondono ai filtri attuali." id="match-count">— domande</span>
         </div>
         <p class="lead" style="margin-top:12px;font-size:.82rem">La «simulazione difesa» estrae un mix casuale di domande avanzate, obiezioni e collegamenti-dati, a tempo.</p>
       </div>
@@ -70,7 +70,7 @@
     <!-- runner -->
     <div id="studio-run" class="hidden">
       <div class="btn-row no-print" style="margin-bottom:12px">
-        <button class="btn ghost sm" id="btn-back">‹ Esci</button>
+        <button class="btn ghost sm tip" data-tip="Torna ai filtri e termina la sessione." id="btn-back">‹ Esci</button>
         <span id="run-mode" class="tag topic"></span>
         <span id="sim-timer" class="count-pill hidden">⏱ —</span>
         <span class="count-pill" id="run-progress">0 / 0</span>
@@ -85,8 +85,8 @@
       <h2 class="sec">Ripasso completo — «da ripassare»</h2>
       <p class="lead">Tutte le domande marcate da ripassare, con risposta e fonte. Stampabile / esportabile.</p>
       <div class="btn-row">
-        <button class="btn ghost sm" id="btn-print">🖨 Stampa / PDF</button>
-        <button class="btn ghost sm" id="btn-export-review">⬇ Esporta (.md)</button>
+        <button class="btn ghost sm tip" data-tip="Apri la finestra di stampa del browser (salva anche in PDF)." id="btn-print">🖨 Stampa / PDF</button>
+        <button class="btn ghost sm tip" data-tip="Scarica le domande «da ripassare» come file Markdown." id="btn-export-review">⬇ Esporta (.md)</button>
         <span class="count-pill" id="review-count">—</span>
       </div>
     </div>
@@ -132,10 +132,10 @@
       <h2 class="sec">Progresso & dati</h2>
       <p class="lead">Il progresso (viste, «da ripassare / la so», box Leitner) è salvato nel browser (localStorage).</p>
       <div class="btn-row">
-        <button class="btn ghost" id="btn-export">⬇ Esporta progresso (.json)</button>
-        <label class="btn ghost" for="imp-file">⬆ Importa progresso</label>
+        <button class="btn ghost tip" data-tip="Salva tutti i progressi (viste, da-ripassare, Leitner) in un file JSON di backup." id="btn-export">⬇ Esporta progresso (.json)</button>
+        <label class="btn ghost tip" data-tip="Carica un file di progressi salvato in precedenza (sostituisce quelli attuali)." for="imp-file">⬆ Importa progresso</label>
         <input id="imp-file" type="file" accept="application/json" class="hidden">
-        <button class="btn ghost" id="btn-reset">🗑 Azzera progresso</button>
+        <button class="btn ghost tip" data-tip="Cancella tutti i progressi e riparti da zero. Irreversibile." id="btn-reset">🗑 Azzera progresso</button>
       </div>
       <p class="lead" id="dataset-info" style="margin-top:14px"></p>
     </div>
@@ -145,7 +145,7 @@
         <label>Voce TTS</label>
         <select id="tts-voice" class="free-input" style="min-height:auto"></select>
       </div>
-      <div class="btn-row"><button class="btn ghost sm" id="tts-test">🔊 Prova voce</button></div>
+      <div class="btn-row"><button class="btn ghost sm tip" data-tip="Ascolta un esempio della voce selezionata." id="tts-test">🔊 Prova voce</button></div>
     </div>
   </section>
 </main>
@@ -154,7 +154,7 @@
   Costruito per la difesa · dati ancorati a tesi, statistiche e concordanza iVoc · tutto offline.
 </footer>
 
-<script src="data.js?v=3"></script>
-<script src="app.js?v=3"></script>
+<script src="data.js?v=4"></script>
+<script src="app.js?v=4"></script>
 </body>
 </html>
