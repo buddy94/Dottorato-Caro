@@ -18,7 +18,7 @@ button{font-family:inherit;cursor:pointer}
 .hidden{display:none !important}
 
 /* ---------- Tooltips (hover) ---------- */
-.tip{position:relative}
+.tip{position:relative;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .tip::after,.tip::before{opacity:0;pointer-events:none;transition:opacity .13s ease;z-index:60}
 .tip::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 9px);transform:translateX(-50%);
   background:#0a3e49;color:#fff;padding:8px 11px;border-radius:9px;font-size:.77rem;font-weight:500;line-height:1.4;
@@ -27,6 +27,8 @@ button{font-family:inherit;cursor:pointer}
 .tip::before{content:'';position:absolute;left:50%;bottom:calc(100% + 3px);transform:translateX(-50%);
   border:6px solid transparent;border-top-color:#0a3e49}
 .tip:hover::after,.tip:hover::before,.tip:focus-visible::after,.tip:focus-visible::before{opacity:1}
+/* long-press su touch: rivela il tooltip senza eseguire l'azione (vedi app.js) */
+.tip.tip-hold::after,.tip.tip-hold::before{opacity:1}
 /* variant: tooltip below (for elements near the top, e.g. tabs) */
 .tip-b::after{bottom:auto;top:calc(100% + 9px)}
 .tip-b::before{bottom:auto;top:calc(100% + 3px);border-top-color:transparent;border-bottom-color:#0a3e49}
@@ -73,7 +75,7 @@ h2.sec{font-size:1.15rem;margin:6px 0 14px;color:var(--petrol-d)}
 .toggle{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--soft);border-radius:10px;padding:8px 11px;font-size:.88rem;font-weight:600}
 .toggle input{accent-color:var(--orange);width:16px;height:16px}
 .searchbar{display:flex;gap:8px}
-.searchbar input{flex:1;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:.95rem}
+.searchbar input{flex:1;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:16px}
 .searchbar input:focus{outline:2px solid var(--petrol-l);border-color:transparent}
 
 /* ---------- Buttons ---------- */
@@ -197,7 +199,20 @@ footer.foot{max-width:var(--maxw);margin:0 auto;padding:18px 16px 40px;color:var
   .panel,.review-q{box-shadow:none;border-color:#bbb}
 }
 @media(max-width:520px){
+  /* header: brand su una riga, tab in un'unica striscia scorrevole */
+  .top-in{flex-wrap:wrap;gap:8px;padding:10px 14px}
   .brand small{display:none}
+  nav.tabs{margin-left:0;width:100%;flex-wrap:nowrap;overflow-x:auto;gap:4px;scrollbar-width:none}
+  nav.tabs::-webkit-scrollbar{display:none}
+  nav.tabs button{flex:0 0 auto;white-space:nowrap;padding:8px 12px;font-size:.84rem}
+  /* leggibilità + più larghezza utile */
   .qtext{font-size:1.08rem}
-  nav.tabs button{padding:7px 9px;font-size:.82rem}
+  main{padding:16px 12px 72px}
+  .panel{padding:15px}
+  /* tap target comodi al tocco */
+  .btn.sm,.seg button{min-height:40px}
+  /* tabelle larghe: scroll orizzontale invece di sforare */
+  .tbl,.md table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  /* i tooltip in long-press vicino al bordo non devono creare scroll di pagina */
+  body{overflow-x:clip}
 }

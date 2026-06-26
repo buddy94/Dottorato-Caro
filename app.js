@@ -52,12 +52,37 @@
     DATA.forEach(q => { const k = (dim === 'angle' ? q.defenseAngle : q[dim]) || (dim === 'angle' ? 'null' : null); if (k) counts[k] = (counts[k] || 0) + 1; });
     const cont = $('#' + containerId); cont.innerHTML = '';
     const tips = TIP[dim] || {};
-    Object.keys(labelMap).filter(k => counts[k]).sort((a, b) => counts[b] - counts[a]).forEach(k => {
+    const keys = Object.keys(labelMap).filter(k => counts[k]).sort((a, b) => counts[b] - counts[a]);
+    const total = keys.reduce((s, k) => s + counts[k], 0);
+
+    // chip "Tutti"
+    const all = document.createElement('button');
+    all.className = 'chip chip-all'; all.dataset.all = '1';
+    all.setAttribute('aria-label', 'Seleziona tutti');
+    all.innerHTML = 'Tutti <span class="n">' + total + '</span>';
+    all.onclick = () => {
+      const anyOn = !!cont.querySelector('.chip[data-k].on');
+      cont.querySelectorAll('.chip[data-k]').forEach(b => {
+        if (anyOn) { b.classList.remove('on'); F[dim].delete(b.dataset.k); }
+        else { b.classList.add('on'); F[dim].add(b.dataset.k); }
+      });
+      all.classList.toggle('on', !anyOn);
+      updateCount();
+    };
+    cont.appendChild(all);
+
+    keys.forEach(k => {
       const b = document.createElement('button');
       b.className = 'chip' + (tips[k] ? ' tip' : ''); b.dataset.k = k;
       if (tips[k]) { b.setAttribute('data-tip', tips[k]); b.setAttribute('aria-label', labelMap[k] + ': ' + tips[k]); }
       b.innerHTML = esc(labelMap[k]) + ' <span class="n">' + counts[k] + '</span>';
-      b.onclick = () => { b.classList.toggle('on'); const s = F[dim]; b.classList.contains('on') ? s.add(k) : s.delete(k); updateCount(); };
+      b.onclick = () => {
+        b.classList.toggle('on'); const s = F[dim];
+        b.classList.contains('on') ? s.add(k) : s.delete(k);
+        const allOn = cont.querySelectorAll('.chip[data-k]').length === cont.querySelectorAll('.chip[data-k].on').length;
+        all.classList.toggle('on', allOn);
+        updateCount();
+      };
       cont.appendChild(b);
     });
   }
@@ -153,23 +178,25 @@
   }
 
   let answerState = null; // per-question interaction state
+  let immediateReveal = null; // set by renderFoot; fired on single-click answers for instant feedback
 
   function renderBody(q) {
-    const body = $('#q-body'); answerState = { picked: null, order: null, pairs: null, free: '' };
+    const body = $('#q-body'); answerState = { picked: null, order: null, pairs: null, free: '', locked: false };
     if (q.type === 'multipla') {
       const multi = Array.isArray(q.answer);
       answerState.picked = new Set();
       body.innerHTML = '<div class="opts">' + q.options.map((o, i) =>
         '<button class="opt" data-i="' + i + '"><span class="mk">' + letter(i) + '</span><span>' + esc(o) + '</span></button>').join('') + '</div>';
       $$('.opt', body).forEach(b => b.onclick = () => {
+        if (answerState.locked) return;
         const i = b.dataset.i;
         if (multi) { b.classList.toggle('sel'); b.classList.contains('sel') ? answerState.picked.add(i) : answerState.picked.delete(i); }
-        else { $$('.opt', body).forEach(x => x.classList.remove('sel')); b.classList.add('sel'); answerState.picked = new Set([i]); }
+        else { $$('.opt', body).forEach(x => x.classList.remove('sel')); b.classList.add('sel'); answerState.picked = new Set([i]); immediateReveal && immediateReveal(); }
       });
     } else if (q.type === 'vero_falso') {
       body.innerHTML = '<div class="opts"><button class="opt" data-v="vero"><span class="mk">V</span><span>Vero</span></button>' +
         '<button class="opt" data-v="falso"><span class="mk">F</span><span>Falso</span></button></div>';
-      $$('.opt', body).forEach(b => b.onclick = () => { $$('.opt', body).forEach(x => x.classList.remove('sel')); b.classList.add('sel'); answerState.picked = b.dataset.v; });
+      $$('.opt', body).forEach(b => b.onclick = () => { if (answerState.locked) return; $$('.opt', body).forEach(x => x.classList.remove('sel')); b.classList.add('sel'); answerState.picked = b.dataset.v; immediateReveal && immediateReveal(); });
     } else if (q.type === 'riordino') {
       answerState.order = shuffle(q.options.map((o, i) => i));
       drawOrder(q);
@@ -184,7 +211,7 @@
         answerState.picked = null;
         body.innerHTML = '<div class="opts">' + q.options.map((o, i) =>
           '<button class="opt" data-i="' + i + '"><span class="mk">' + letter(i) + '</span><span>' + esc(o) + '</span></button>').join('') + '</div>';
-        $$('.opt', body).forEach(b => b.onclick = () => { $$('.opt', body).forEach(x => x.classList.remove('sel')); b.classList.add('sel'); answerState.picked = b.dataset.i; });
+        $$('.opt', body).forEach(b => b.onclick = () => { if (answerState.locked) return; $$('.opt', body).forEach(x => x.classList.remove('sel')); b.classList.add('sel'); answerState.picked = b.dataset.i; immediateReveal && immediateReveal(); });
       } else {
         body.innerHTML = '<input class="free-input" id="free" placeholder="completa…">';
       }
@@ -230,7 +257,12 @@
       return any ? ok : null;
     }
     if (q.type === 'cloze') {
-      if (q.options && q.options.length) { if (answerState.picked == null) return null; return norm(q.options[+answerState.picked]) === norm(answerSolText(q)); }
+      if (q.options && q.options.length) {
+        if (answerState.picked == null) return null;
+        const sol = norm(answerSolText(q));
+        $$('.opt', $('#q-body')).forEach(b => { if (norm(q.options[+b.dataset.i]) === sol) b.classList.add('correct'); else if (b.dataset.i === String(answerState.picked)) b.classList.add('wrong'); });
+        return norm(q.options[+answerState.picked]) === sol;
+      }
       const v = ($('#free') && $('#free').value) || ''; if (!norm(v)) return null;
       return norm(v) === norm(q.answer) || norm(q.answer).includes(norm(v)) && norm(v).length > 2;
     }
@@ -271,23 +303,32 @@
   function renderFoot(q) {
     const foot = $('#q-foot'); const auto = ['vero_falso', 'multipla', 'riordino', 'abbinamento', 'cloze'].includes(q.type);
     foot.innerHTML =
-      '<button class="btn ghost sm tip" data-tip="Rivela la risposta, la spiegazione (il «perché») e la fonte." id="btn-sol">💡 Mostra soluzione</button>' +
+      '<button class="btn ghost sm tip" data-tip="Mostra/nascondi la risposta, la spiegazione (il «perché») e la fonte." id="btn-sol">💡 Mostra soluzione</button>' +
       '<div class="seg" id="seg-status"><button class="review tip" data-tip="Marca «da ripassare»: tornerà più spesso e finirà nel Ripasso." data-s="review">Da ripassare</button><button class="know tip" data-tip="«La so»: la rivedrai meno spesso (sale di scatola Leitner)." data-s="know">La so</button></div>' +
       '<button class="btn primary sm tip" data-tip="Vai alla prossima domanda (rivela la soluzione se non l’hai già vista)." id="btn-next" style="margin-left:auto">Prossima ›</button>';
-    let revealed = false;
-    const reveal = () => {
-      if (revealed) return; revealed = true;
-      let res = auto ? checkAnswer(q) : null;
-      if (auto && res !== null) recordOutcome(q.id, res);
-      showSolution(q, res);
-      // pre-select segment from outcome
-      if (res === true) preselect('know'); else if (res === false) preselect('review');
-    };
-    $('#btn-sol', foot).onclick = reveal;
+    const solBtn = $('#btn-sol', foot);
+    let checked = false;   // answer evaluated/recorded
+    let lastRes = null;    // last verdict (true/false/null)
+    let solShown = false;  // solution panel currently visible
+
     function preselect(s) { $$('#seg-status button', foot).forEach(b => b.classList.toggle('on', b.dataset.s === s)); setStatus(q.id, s, true); }
+    function ensureChecked() {
+      if (checked) return; checked = true; answerState.locked = true;
+      lastRes = auto ? checkAnswer(q) : null;
+      if (auto && lastRes !== null) recordOutcome(q.id, lastRes);
+      // pre-select segment from outcome (l'utente può comunque cambiarlo)
+      if (lastRes === true) preselect('know'); else if (lastRes === false) preselect('review');
+    }
+    function showSol() { ensureChecked(); showSolution(q, lastRes); solShown = true; solBtn.innerHTML = '🙈 Nascondi soluzione'; }
+    function hideSol() { $('#q-solution').innerHTML = ''; solShown = false; solBtn.innerHTML = '💡 Mostra soluzione'; }
+    solBtn.onclick = () => solShown ? hideSol() : showSol();
+
+    // feedback immediato sui tipi a click singolo: valuta, preseleziona lo stato, e se sbagliato apre la soluzione
+    immediateReveal = () => { ensureChecked(); if (lastRes === false) showSol(); };
+
     $$('#seg-status button', foot).forEach(b => b.onclick = () => { $$('#seg-status button', foot).forEach(x => x.classList.remove('on')); b.classList.add('on'); setStatus(q.id, b.dataset.s, false); });
     const cur = prog.items[q.id]; if (cur && cur.status) $$('#seg-status button', foot).forEach(b => b.classList.toggle('on', b.dataset.s === cur.status));
-    $('#btn-next', foot).onclick = () => { reveal(); setTimeout(() => { SESSION.i++; renderQ(); }, 0); };
+    $('#btn-next', foot).onclick = () => { if (!solShown) showSol(); setTimeout(() => { SESSION.i++; renderQ(); }, 0); };
   }
 
   function renderDone() {
@@ -468,4 +509,42 @@
     $('#dataset-info').innerHTML = '<strong>' + DATA.length + '</strong> domande caricate · generato ' + esc(window.QUIZ_BUILD || 'n/d') + '.';
   }
   init();
+})();
+
+/* ---- Touch: long-press rivela il tooltip; tap singolo = azione normale ----
+   Su desktop restano hover e focus (gestiti in CSS). Gli handler sono solo
+   touch: su un mouse non scattano mai, quindi sono innocui lì. */
+(function () {
+  'use strict';
+  var LONG = 450;            // ms di pressione per mostrare il tooltip
+  var MOVE = 10;             // px oltre cui consideriamo "scroll", non press
+  var timer = null, shown = null, suppress = false, sx = 0, sy = 0;
+  function clearTimer() { if (timer) { clearTimeout(timer); timer = null; } }
+  function hide() { if (shown) { shown.classList.remove('tip-hold'); shown = null; } }
+  document.addEventListener('touchstart', function (e) {
+    var t = e.target.closest && e.target.closest('.tip[data-tip]');
+    if (shown && t !== shown) hide();          // un tap altrove chiude il tooltip aperto
+    if (!t) return;
+    suppress = false;
+    var to = e.touches && e.touches[0];
+    sx = to ? to.clientX : 0; sy = to ? to.clientY : 0;
+    clearTimer();
+    timer = setTimeout(function () {
+      timer = null; suppress = true; shown = t; t.classList.add('tip-hold');
+    }, LONG);
+  }, { passive: true });
+  document.addEventListener('touchmove', function (e) {
+    var to = e.touches && e.touches[0]; if (!to) return;
+    if (Math.abs(to.clientX - sx) > MOVE || Math.abs(to.clientY - sy) > MOVE) clearTimer();
+  }, { passive: true });
+  document.addEventListener('touchend', function (e) {
+    clearTimer();
+    if (suppress) e.preventDefault();          // ingoia il "click" sintetico che seguirebbe
+    if (shown) setTimeout(hide, 2200);          // lascia il tempo di leggere, poi nasconde
+  }, { passive: false });
+  document.addEventListener('touchcancel', function () { clearTimer(); hide(); }, { passive: true });
+  // rete di sicurezza: se il long-press è scattato, annulla l'azione del click
+  document.addEventListener('click', function (e) {
+    if (suppress) { e.stopPropagation(); e.preventDefault(); suppress = false; }
+  }, true);
 })();
