@@ -40,10 +40,10 @@
   const letter = i => String.fromCharCode(65 + i);
 
   // ---------- filter state ----------
-  const F = { topic: new Set(), type: new Set(), angle: new Set(), review: false, unseen: false, random: false, leitner: true, oral: false, search: '' };
+  const F = { topic: new Set(), type: new Set(), angle: new Set(), review: false, unseen: false, random: false, leitner: true, oral: false, search: '', redteam: false };
 
   const TIP = {
-    topic: { tesi: 'Domande sul contenuto della tesi, capitolo per capitolo.', metodologia: 'Il perché delle scelte: corpus, periodo, digitalizzazione, tagging.', statistiche: 'Lettura corretta dei numeri di iVoc e loro legame con la tesi.', concordanze: 'Dati della concordanza (occorrenze, lemmi) e cosa sostengono.', testi: 'Le 56 raccolte del corpus: tema, stile, struttura.', autori: 'I 41 poeti del corpus: biografia e collocazione critica.', contesto: 'Il 1960-65: movimenti, eventi, clima culturale.' },
+    topic: { tesi: 'Domande sul contenuto della tesi, capitolo per capitolo.', metodologia: 'Il perché delle scelte: corpus, periodo, digitalizzazione, tagging.', statistiche: 'Lettura corretta dei numeri di iVoc e loro legame con la tesi.', concordanze: 'Dati della concordanza (occorrenze, lemmi) e cosa sostengono.', testi: 'Le 56 raccolte del corpus: tema, stile, struttura.', autori: 'I 41 poeti del corpus: biografia e collocazione critica.', contesto: 'Il 1960-65: movimenti, eventi, clima culturale.', red_team: 'Obiezioni, limiti e difesa critica: le domande più dure della giuria.' },
     type: { aperta: 'Rispondi a voce o a mente, poi rivela e auto-valutati.', vero_falso: 'Scegli Vero o Falso; la correzione è automatica.', multipla: 'Scegli l’opzione (o le opzioni) corretta.', riordino: 'Metti gli elementi nell’ordine giusto.', abbinamento: 'Associa ogni voce al suo corrispondente.', flashcard: 'Carta da memoria: pensa la risposta, poi rivela.', cloze: 'Completa lo spazio vuoto nella frase.' },
     angle: { ricordo: 'Contenuto di base: cosa dice o cosa contiene.', metodologia: 'Perché questa scelta di metodo.', limiti: 'I punti deboli del metodo.', obiezione: 'Avvocato del diavolo: rispondi a una critica.', collegamento_dati: 'Collega un dato alla tesi che sostiene (e viceversa).', definizione: 'Definisci un termine tecnico in una frase.', contributo: 'Cosa c’è di nuovo e originale.', contesto: 'Il legame col periodo 1960-65.' }
   };
@@ -93,6 +93,7 @@
       if (F.topic.size && !F.topic.has(q.topic)) return false;
       if (F.type.size && !F.type.has(q.type)) return false;
       if (F.angle.size && !F.angle.has(q.defenseAngle)) return false;
+      if (F.redteam && !(q.tags && q.tags.some(t => t === 'red_team' || t === 'red-team'))) return false;
       const it = prog.items[q.id];
       if (F.review && !(it && it.status === 'review')) return false;
       if (F.unseen && it && it.seen > 0) return false;
@@ -135,6 +136,19 @@
     $('#studio-run').classList.remove('hidden');
     $('#run-mode').textContent = simulation ? 'Simulazione difesa' : (F.oral ? 'Modalità orale' : 'Studio');
     if (simulation) startTimer(Math.min(20, list.length) * 60); else stopTimer();
+    renderQ();
+  }
+  function startAdvocatSession() {
+    const list = shuffle(DATA.filter(q =>
+      (q.tags && q.tags.some(t => t === 'red_team' || t === 'red-team')) ||
+      ['obiezione', 'limiti'].includes(q.defenseAngle)
+    ));
+    if (!list.length) { alert('Nessuna domanda red-team trovata.'); return; }
+    SESSION.sim = false; SESSION.list = list; SESSION.i = 0;
+    $('#studio-setup').classList.add('hidden');
+    $('#studio-run').classList.remove('hidden');
+    $('#run-mode').textContent = '🔴 Avvocato del diavolo';
+    stopTimer();
     renderQ();
   }
   function endSession() { stopTimer(); $('#studio-run').classList.add('hidden'); $('#studio-setup').classList.remove('hidden'); updateCount(); }
@@ -418,6 +432,8 @@
     ['defense_brief', '📘', 'Brief di difesa', 'La spina dorsale argomentativa, capitolo per capitolo.'],
     ['domande_giuria', '🎙', 'Domande della giuria', 'Le domande più probabili con risposta modello.'],
     ['punti_deboli', '🛡', 'Punti deboli & contromosse', 'Red-team: gli anelli deboli e come rispondere.'],
+    ['incongruenze', '🔍', 'Incongruenze e refusi (verificati)', 'Tutte le discrepanze interne alla tesi, con spiegazione e risposta pronta.'],
+    ['red_team_report', '🔴', 'Red-team — Report esecutivo', 'Analisi sistematica delle obiezioni critiche con contromosse argomentate.'],
     ['cheat_sheet', '🗂', 'Cheat-sheet dei numeri', 'Le statistiche da avere sulla punta della lingua.'],
     ['glossario', '📖', 'Glossario', 'I termini tecnici, una definizione cristallina ciascuno.'],
     ['timeline_contesto', '🗓', 'Timeline 1960–65', 'Il contesto storico-letterario, anno per anno.']
@@ -497,6 +513,7 @@
   $('#f-search').oninput = e => { F.search = e.target.value; updateCount(); };
   $('#btn-start').onclick = () => startSession(false);
   $('#btn-sim').onclick = () => startSession(true);
+  $('#btn-advocat').onclick = () => startAdvocatSession();
   $('#btn-back').onclick = endSession;
 
   // ---------- init ----------
@@ -505,6 +522,22 @@
     buildChips('f-topic', 'topic', TOPIC_LABEL);
     buildChips('f-type', 'type', TYPE_LABEL);
     buildChips('f-angle', 'angle', ANGLE_LABEL);
+    // chip speciale Red-team (filtra per tag, non per topic)
+    (function() {
+      const rtCount = DATA.filter(q => q.tags && q.tags.some(t => t === 'red_team' || t === 'red-team')).length;
+      if (!rtCount) return;
+      const cont = $('#f-topic');
+      const b = document.createElement('button');
+      b.className = 'chip tip'; b.dataset.rt = '1';
+      b.setAttribute('data-tip', 'Obiezioni, limiti e difesa critica: le domande più dure della giuria.');
+      b.innerHTML = '🔴 Red-team <span class="n">' + rtCount + '</span>';
+      b.onclick = () => {
+        b.classList.toggle('on');
+        F.redteam = b.classList.contains('on');
+        updateCount();
+      };
+      cont.appendChild(b);
+    })();
     updateCount(); refreshTabsBadges(); loadVoices();
     $('#dataset-info').innerHTML = '<strong>' + DATA.length + '</strong> domande caricate · generato ' + esc(window.QUIZ_BUILD || 'n/d') + '.';
   }
