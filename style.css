@@ -12,10 +12,22 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{font-family:var(--font);color:var(--ink);background:var(--bg);line-height:1.55;-webkit-font-smoothing:antialiased}
 a{color:var(--petrol-l)}
 button{font-family:inherit;cursor:pointer}
 .hidden{display:none !important}
+
+/* ---------- Responsive hardening (globale, innocuo su desktop) ---------- */
+/* parole/stringhe lunghe (domande, soluzioni, fonti, markdown) vanno a capo invece di sforare */
+.qtext,.qsub,.solution,.solution .ans,.solution .src,.md,.review-q,.opt,.chip,.count-pill{overflow-wrap:anywhere}
+/* feedback tocco pulito (niente flash grigio di sistema) */
+button,.opt,.chip{-webkit-tap-highlight-color:rgba(14,85,99,.15)}
+/* rispetta chi ha ridotto le animazioni di sistema */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+  .view{animation:none}
+}
 
 /* ---------- Tooltips (hover) ---------- */
 .tip{position:relative}
@@ -36,7 +48,7 @@ button{font-family:inherit;cursor:pointer}
 /* variant: tooltip below (for elements near the top, e.g. tabs) */
 .tip-b::after{bottom:auto;top:calc(100% + 9px)}
 .tip-b::before{bottom:auto;top:calc(100% + 3px);border-top-color:transparent;border-bottom-color:#0a3e49}
-@media(max-width:520px){.tip::after{max-width:200px;font-size:.72rem}}
+@media(max-width:640px){.tip::after{max-width:200px;font-size:.72rem}}
 @media print{.tip::after,.tip::before{display:none}}
 
 /* ---------- Header ---------- */
@@ -202,21 +214,97 @@ footer.foot{max-width:var(--maxw);margin:0 auto;padding:18px 16px 40px;color:var
   body{background:#fff}
   .panel,.review-q{box-shadow:none;border-color:#bbb}
 }
-@media(max-width:520px){
-  /* header: brand su una riga, tab in un'unica striscia scorrevole */
-  .top-in{flex-wrap:wrap;gap:8px;padding:10px 14px}
+/* ============================================================
+   MOBILE ≤640px — bottom navigation + touch target + impaginazione
+   (rifonde il vecchio blocco ≤520; la "strip di tab" è sostituita
+   dalla bottom nav fissa)
+   ============================================================ */
+@media(max-width:640px){
+  /* --- Header: solo brand; i tab escono dal flusso (bottom nav fixed) --- */
+  .top-in{gap:8px;padding:10px 14px}
   .brand small{display:none}
-  nav.tabs{margin-left:0;width:100%;flex-wrap:nowrap;overflow-x:auto;gap:4px;scrollbar-width:none}
-  nav.tabs::-webkit-scrollbar{display:none}
-  nav.tabs button{flex:0 0 auto;white-space:nowrap;padding:8px 12px;font-size:.84rem}
-  /* leggibilità + più larghezza utile */
-  .qtext{font-size:1.08rem}
-  main{padding:16px 12px 72px}
+
+  /* --- Bottom navigation bar: riusa #tabs, nessun JS --- */
+  nav.tabs{
+    position:fixed;left:0;right:0;bottom:0;z-index:40;margin:0;width:100%;
+    display:flex;gap:0;flex-wrap:nowrap;
+    background:var(--card);border-top:1px solid var(--line);
+    box-shadow:0 -2px 12px rgba(10,40,49,.10);
+    padding-bottom:env(safe-area-inset-bottom)
+  }
+  nav.tabs button{
+    flex:1 1 0;min-width:0;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    min-height:52px;border-radius:0;background:transparent;color:var(--muted);
+    font-size:.66rem;font-weight:700;padding:6px 2px;white-space:nowrap
+  }
+  /* icona cella: i button #tabs sono .tip.tip-b, quindi il loro ::before è già il triangolino
+     tooltip (opacity:0;position:absolute). Qui riusiamo lo stesso ::before per l'emoji → vanno
+     RESETTATE quelle proprietà, altrimenti l'icona sarebbe invisibile e fuori dal flusso. */
+  nav.tabs button::before{
+    content:attr(data-icon);font-size:1.15rem;line-height:1;
+    position:static;opacity:1;transform:none;border:0;top:auto;bottom:auto;left:auto;
+    width:auto;height:auto;pointer-events:none
+  }
+  nav.tabs button:hover{background:transparent;color:var(--muted)}
+  nav.tabs button.active{background:var(--soft);color:var(--petrol)}
+
+  /* tooltip long-press dei tab ribaltato VERSO L'ALTO (in bottom nav, sotto verrebbe tagliato).
+     Solo la bolla ::after: il triangolino ::before è ora occupato dall'icona (nessun residuo).
+     La cella NON deve avere overflow:hidden (taglierebbe questa bolla che sta sopra il box). */
+  nav.tabs .tip-b::after{top:auto;bottom:calc(100% + 9px)}
+  /* bolla più stretta così le celle centrali stanno dentro anche a 320px; celle estreme
+     ancorate verso l'interno (altrimenti, centrate, sforerebbero il bordo → tagliate da overflow-x:clip) */
+  nav.tabs button::after{max-width:150px}
+  nav.tabs button:first-child::after{left:8px;right:auto;transform:none}
+  nav.tabs button:last-child::after{left:auto;right:8px;transform:none}
+
+  /* --- Spazio per non finire sotto la barra; header sticky resta in alto --- */
+  /* overflow-x:clip anche su html: contiene la bottom nav fixed senza creare uno
+     scroll-container (clip, non hidden → la sticky header continua a funzionare) */
+  html{overflow-x:clip}
+  body{overflow-x:clip;padding-bottom:calc(56px + env(safe-area-inset-bottom))}
+
+  /* --- Larghezza utile + leggibilità (preservati dal vecchio ≤520) --- */
+  main{padding:16px 12px 24px}
   .panel{padding:15px}
-  /* tap target comodi al tocco */
-  .btn.sm,.seg button{min-height:40px}
-  /* tabelle larghe: scroll orizzontale invece di sforare */
+  .qtext{font-size:1.08rem}
+
+  /* --- Touch target ≥44px sugli elementi interattivi al tocco --- */
+  .chip{min-height:44px;padding:8px 13px}
+  .opt{min-height:44px}
+  .toggle{min-height:44px}
+  .seg button{min-height:44px}
+  .btn.sm{min-height:44px}
+  .order-item .mvs button{width:44px;height:44px}
+
+  /* --- Runner (.qfoot): «Prossima» full-width e comodo, niente overlap --- */
+  .qfoot #btn-sol{order:1}
+  .qfoot #seg-status{order:2;margin-left:auto}
+  .qfoot #btn-next{order:3;width:100%;margin-left:0 !important}
+
+  /* --- Barra filtri: il pill non finisce orfano su una riga tutta sua --- */
+  .btn-row .count-pill{margin-left:0}
+
+  /* --- Reader materiali: striscia orizzontale scorrevole (come i vecchi tab) --- */
+  .mat-nav{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .mat-nav::-webkit-scrollbar{display:none}
+  .mat-nav button{flex:0 0 auto;white-space:nowrap}
+
+  /* --- Tabelle larghe: scroll orizzontale invece di sforare la pagina --- */
   .tbl,.md table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
-  /* i tooltip in long-press vicino al bordo non devono creare scroll di pagina */
-  body{overflow-x:clip}
+}
+
+/* ============================================================
+   MICRO-PHONE ≤380px — 5 celle bottom nav a 320px, brand compatto
+   ============================================================ */
+@media(max-width:380px){
+  nav.tabs button{font-size:.6rem;padding:6px 1px;gap:1px}
+  nav.tabs button::before{font-size:1.05rem}
+  .top-in{gap:7px;padding:9px 11px}
+  .brand{gap:8px}
+  .brand-logo{height:28px}
+  main{padding:14px 10px 20px}
+  .panel{padding:13px}
+  .chip{padding:8px 10px}
 }
